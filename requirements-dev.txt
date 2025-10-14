@@ -1,0 +1,16 @@
+# Development Dependencies
+pytest
+pytest-cov
+black
+flake8
+pre-commit
+ruff
+python-dotenv
+
+
+# Type checking
+types-requests
+types-setuptools
+
+# Install the project in editable mode
+-e .
