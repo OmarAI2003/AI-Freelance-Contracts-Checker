@@ -57,7 +57,6 @@
 
 
 # Environment setup [`⇧`](#contents)
-
 1. First and foremost, please see the suggested IDE setup in the dropdown below to make sure that your editor is ready for development.
 
 > [!IMPORTANT]
@@ -76,7 +75,7 @@
 > </p>
 > </details>
 
-1. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the [AI-Freelance-Contracts-Checker repo](https://github.com/OmarAI2003/AI-Freelance-Contracts-Checker), clone your fork, and configure the remotes:
+1. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the [AI-Legal-Checker repo](https://github.com/activist-org/AI-Legal-Checker), clone your fork, and configure the remotes:
 
 > [!NOTE]
 >
@@ -88,19 +87,10 @@
 >
 > To run git commands with SSH, remember then to substitute the HTTPS URL, `https://github.com/...`, with the SSH one, `git@github.com:...`.
 >
-> - e.g. Cloning now becomes `git clone git@github.com:OmarAI2003/AI-Freelance-Contracts-Checker.git`
+> - e.g. Cloning now becomes `git clone git@github.com:<your-username>/AI-Legal-Checker.git`
 >
 > GitHub also has their documentation on how to [Generate a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) 🔑
 >
-> </p>
-> </details>
-
-```bash
-# Clone your fork of the repo into the current directory.
-git clone https://github.com/OmarAI2003/AI-Freelance-Contracts-Checker
-# Navigate to the newly cloned directory.
-cd AI-Freelance-Contracts-Checker
-# Assign the original repo to a remote called "upstream".
 > </p>
 > </details>
 
@@ -139,10 +129,6 @@ git remote add upstream https://github.com/OmarAI2003/AI-Freelance-Contracts-Che
 You're now ready to work on `AI-Freelance-Contracts-Checker`!
 
 
-
-
-
-
 ## 🆘 Support
 
 For issues and questions:
@@ -169,18 +155,6 @@ AI-Freelance-Contracts-Checker/
 └── README.md
 
 ```
-
-### Key Directories:
-- `src/`: Core source code of the contract checker
-- `data/`: Sample contracts and training data
-- `tests/`: Unit and integration tests
-- `docs/`: Project documentation
-- `scripts/`: Utility scripts and tools
-
-### Key Files:
-- `requirements.txt`: Production dependencies
-- `requirements-dev.txt`: Development dependencies
-- `architecture.md`: System design and AWS infrastructure details
 
 ## 📄 License
 
