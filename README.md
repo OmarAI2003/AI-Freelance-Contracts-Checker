@@ -9,25 +9,25 @@
 
 ## **Contents**
 
-- [Overview `⇧`](#overview-)
-- [Features `⇧`](#key-features-)
-- [Architecture `⇧`](#architecture-)
-- [Environment setup `⇧`](#environment-setup-)
-- [Use Cases `⇧`](#use-cases-)
-- [Project Structure `⇧`](#project-structure-)
+- [🎯 Overview `⇧`](#overview-)
+- [🌟 Features `⇧`](#features-)
+- [🏗️ Architecture `⇧`](#architecture-)
+- [🛠️ Environment setup `⇧`](#environment-setup-)
+- [🧩 Project Structure `⇧`](#project-structure-)
+- [👥 Contributors `⇧`](#contributors-)
+
+<a id="overview-"></a>
+
+# 🎯 Overview [`⇧`](#contents)
 
 
-<a id="conventions-"></a>
+<a id="features-"></a>
 
+# 🌟 Features [`⇧`](#contents)
 
-## 🎯 Overview [`⇧`](#contents)
+<a id="architecture-"></a>
 
-
-
-## 🌟Features [`⇧`](#contents)
-
-
-## 🏗️ Architecture [`⇧`](#contents)
+# 🏗️ Architecture [`⇧`](#contents)
 
 ![Architecture Diagram](architecture.png)
 
@@ -55,6 +55,7 @@
 - **Website**: [http://egyptian-legal-analysis-ui.s3-website-us-west-2.amazonaws.com/](https://egyptian-legal-analysis-ui.s3.amazonaws.com/index.html)
 
 
+<a id="environment-setup"></a>
 
 # Environment setup [`⇧`](#contents)
 1. First and foremost, please see the suggested IDE setup in the dropdown below to make sure that your editor is ready for development.
@@ -137,7 +138,9 @@ For issues and questions:
 3. Ensure all AWS services are properly configured
 4. Verify agent deployment status
 
-## 📁 Project Structure
+<a id="project-structure-"></a>
+
+# 📁 Project Structure [`⇧`](#contents)
 ```
 AI-Freelance-Contracts-Checker/
 ├── src/
@@ -156,10 +159,11 @@ AI-Freelance-Contracts-Checker/
 
 ```
 
-## 📄 License
+## 📄 License 
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+<a id="contributors-"></a>
 
 # Contributors [`⇧`](#contents)
 
