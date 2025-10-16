@@ -80,5 +80,11 @@ Thumbs.db
 temp/
 tmp/
 
+# ContractGuard Specific - Test files only
+*.pdf
+*.docx
+*.doc
+
 # AgentCore
 .bedrock_agentcore/
+.agentcore/

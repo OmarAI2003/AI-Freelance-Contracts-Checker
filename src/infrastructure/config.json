@@ -1,0 +1,14 @@
+{
+  "region": "us-east-1",
+  "account_id": "897722703585",
+  "legal_bucket": "contractguard-legal-docs-20251017-014038",
+  "contracts_bucket": "contractguard-contracts-20251017-014038",
+  "uploads_bucket": "contractguard-uploads-20251017-014038",
+  "agent_role_name": "ContractGuardAgentRole-20251017-014038",
+  "agent_role_arn": "arn:aws:iam::897722703585:role/ContractGuardAgentRole-20251017-014038",
+  "memory_id": "contractguard-memory-20251017-014038",
+  "model_id": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+  "embedding_model": "amazon.titan-embed-text-v1",
+  "setup_date": "2025-10-17T01:40:46.984400",
+  "note": "Developers will create their own Knowledge Bases when ready"
+}
