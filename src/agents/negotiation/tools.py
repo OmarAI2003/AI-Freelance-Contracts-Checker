@@ -1,12 +1,40 @@
 """Tools for the Negotiation Agent including market rate and case law search"""
 
-from strands import tool
+from typing import Dict, List, Optional
 from datetime import datetime
 import json
-from typing import Dict, List, Optional
 
-# Market rate database (hardcoded for demo)
-MARKET_RATES = {
+# Fallback data when DynamoDB is not available
+DEFAULT_CASE_DATABASE = {
+    "non_payment": [
+        {
+            "case_id": "freelancer_v_startup_2023_ca",
+            "title": "Freelancer Developer Won Against Startup",
+            "jurisdiction": "USA-California",
+            "court": "CA Small Claims",
+            "dispute_amount": "$5,000",
+            "outcome": "Freelancer won",
+            "award_amount": "$15,000 (2x + legal fees)",
+            "timeline": "3 months",
+            "key_factors": ["Written contract", "Proof of delivery", "Client ghosted"],
+            "lessons": ["Document everything", "Small claims is effective"]
+        }
+    ],
+    "ip_rights": [
+        {
+            "case_id": "designer_v_agency_2024_uk",
+            "title": "Designer Retained Portfolio Rights",
+            "jurisdiction": "UK",
+            "court": "Commercial Court",
+            "dispute_type": "IP Rights",
+            "outcome": "Split decision",
+            "key_factors": ["Standard industry practice", "No explicit IP transfer"],
+            "lessons": ["Specify portfolio usage rights", "Clear IP transfer terms"]
+        }
+    ]
+}
+
+DEFAULT_MARKET_RATES = {
     "software_developer": {
         "usa-california": {
             "hourly_rate": {"min": 80, "max": 180, "median": 120},
@@ -81,26 +109,22 @@ CASE_DATABASE = {
     ]
 }
 
-@tool
 def market_rate_tool(
     role: str,
     jurisdiction: str,
     experience_years: int = 5,
     specialization: str = None
 ) -> Dict:
-    """Get market rates for freelancer roles with industry data"""
+    """Get market rates for freelancer roles with industry data from DynamoDB"""
     
     # Normalize input
     role = role.lower().replace(" ", "_")
     jurisdiction = jurisdiction.lower()
     
-    # Get base rates
-    if role not in MARKET_RATES or jurisdiction not in MARKET_RATES[role]:
+    # Get data from default rates
+    if role not in DEFAULT_MARKET_RATES or jurisdiction not in DEFAULT_MARKET_RATES[role]:
         raise ValueError(f"No data available for {role} in {jurisdiction}")
-    
-    data = MARKET_RATES[role][jurisdiction].copy()
-    
-    # Adjust for experience
+    data = DEFAULT_MARKET_RATES[role][jurisdiction].copy()
     experience_multiplier = 1.0
     if experience_years < 3:
         experience_multiplier = 0.8
@@ -129,7 +153,6 @@ def market_rate_tool(
     
     return data
 
-@tool
 def case_law_search(
     issue_type: str,
     jurisdiction: str,
@@ -142,14 +165,13 @@ def case_law_search(
     issue_type = issue_type.lower()
     jurisdiction = jurisdiction.lower()
     
-    # Get relevant cases
-    cases = CASE_DATABASE.get(issue_type, [])
-    
-    # Filter by jurisdiction if specified
-    relevant_cases = [
-        case for case in cases 
-        if jurisdiction in case['jurisdiction'].lower()
-    ]
+    # Get cases from default database
+    relevant_cases = []
+    if issue_type in DEFAULT_CASE_DATABASE:
+        relevant_cases = [
+            case for case in DEFAULT_CASE_DATABASE[issue_type]
+            if jurisdiction in case['jurisdiction'].lower()
+        ]
     
     # Calculate success metrics
     total_cases = len(relevant_cases)

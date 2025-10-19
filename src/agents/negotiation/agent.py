@@ -1,10 +1,12 @@
 """Main Negotiation Agent implementation"""
 
-from typing import Dict, Optional
-from strands import Agent
-from strands.models import BedrockModel
-from bedrock_agentcore.memory import MemoryClient
-from .tools import market_rate_tool, case_law_search
+from typing import Dict, Optional, List
+import os
+import json
+from dotenv import load_dotenv
+from langchain_community.llms.bedrock import Bedrock
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from .prompts import (
     NEGOTIATION_SYSTEM_PROMPT,
     CLAUSE_ANALYSIS_PROMPT,
@@ -12,137 +14,159 @@ from .prompts import (
 )
 
 class NegotiationAgent:
-    def __init__(self, memory_id: Optional[str] = None):
-        """Initialize Negotiation Agent with memory"""
-        self.model = BedrockModel("us.anthropic.claude-3-7-sonnet-20250219-v1:0")
-        self.memory_client = MemoryClient() if memory_id else None
-        self.memory_id = memory_id
+    def __init__(self):
+        """Initialize Negotiation Agent"""
+        load_dotenv()
         
-        # Initialize agent with tools
-        self.agent = Agent(
-            model=self.model,
-            system_prompt=NEGOTIATION_SYSTEM_PROMPT,
-            tools=[market_rate_tool, case_law_search]
+        # Initialize Bedrock client with bearer token
+        import boto3
+        session = boto3.Session(region_name=os.getenv("AWS_REGION"))
+        
+        bedrock_runtime = session.client(
+            service_name='bedrock-runtime',
+            region_name=os.getenv("AWS_REGION"),
+            aws_access_key_id="",
+            aws_secret_access_key="",
+            aws_session_token=os.getenv("AWS_BEARER_TOKEN_BEDROCK")
         )
         
-        if memory_id:
-            self._setup_memory_hooks()
-
-    def _setup_memory_hooks(self):
-        """Set up memory hooks for negotiation history"""
-        # TODO: Implement memory hooks for tracking negotiation history
-        pass
-
-    def analyze_clause(self, clause: str, contract_type: str) -> Dict:
-        """Analyze a contract clause for potential issues"""
-        analysis = self.agent.generate(
-            f"{CLAUSE_ANALYSIS_PROMPT}\n\nAnalyze this clause:\n{clause}",
-            max_tokens=1000
+        # Use invoke directly with raw request format for Claude 3
+        self.bedrock_client = bedrock_runtime
+        self.model_kwargs = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "temperature": 0.7,
+            "max_tokens": 2048
+        }
+        self.model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+        
+        # Initialize output parser
+        self.output_parser = StrOutputParser()
+    
+    def analyze_contract(self, contract_text: str) -> Dict[str, str]:
+        """Analyze a contract and identify key terms and potential issues"""
+        
+        prompt = CLAUSE_ANALYSIS_PROMPT + "\n\nContract Text: " + contract_text + "\n\nAnalysis:"
+        
+        request_body = {
+            **self.model_kwargs,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+            
+        response = self.bedrock_client.invoke_model(
+            modelId=self.model_id,
+            body=json.dumps(request_body),
+            accept="application/json",
+            contentType="application/json"
         )
+        
+        response_body = json.loads(response.get('body').read().decode())
+        
         return {
-            "clause": clause,
-            "type": contract_type,
-            "issues": analysis,
-            "risk_level": self._assess_risk_level(analysis)
+            "analysis": response_body.get("content")[0].get("text")
         }
+    
+    def explain_terms(self, terms: str) -> str:
+        """Explain contract terms in simple language"""
+        
+        prompt = """Please explain these contract terms in simple, clear language that a freelancer can understand:
 
-    def _assess_risk_level(self, analysis: str) -> str:
-        """Assess risk level based on clause analysis"""
-        # Count serious issues
-        serious_issues = sum(
-            1 for issue in ["violates", "illegal", "unfair", "dangerous"]
-            if issue in analysis.lower()
-        )
-        
-        if serious_issues >= 2:
-            return "high"
-        elif serious_issues == 1:
-            return "medium"
-        return "low"
+Terms: """ + terms + """
 
-    def negotiate(
-        self,
-        unfair_clause: str,
-        clause_type: str,
-        freelancer_info: Dict,
-        session_id: Optional[str] = None
-    ) -> Dict:
-        """Generate counter-proposal and negotiation strategy"""
-        
-        # Get market data
-        market_data = market_rate_tool(
-            role=freelancer_info["role"],
-            jurisdiction=freelancer_info["location"],
-            experience_years=freelancer_info.get("experience_years", 5),
-            specialization=freelancer_info.get("specialization")
-        )
-        
-        # Get relevant case law
-        cases = case_law_search(
-            issue_type=clause_type,
-            jurisdiction=freelancer_info["location"],
-            contract_type="service_agreement"
-        )
-        
-        # Analyze the clause
-        analysis = self.analyze_clause(unfair_clause, clause_type)
-        
-        # Generate negotiation tactics
-        tactics = self.agent.generate(
-            f"{NEGOTIATION_TACTICS_PROMPT}\n\nGenerate tactics for:\n"
-            f"Clause: {unfair_clause}\n"
-            f"Analysis: {analysis}\n"
-            f"Market Data: {market_data}\n"
-            f"Case Law: {cases}",
-            max_tokens=1000
-        )
-        
-        # Generate counter-proposal
-        counter_proposal = self.agent.generate(
-            f"Based on the analysis, market data, and case law, generate a "
-            f"professional counter-proposal for:\n{unfair_clause}",
-            max_tokens=1000
-        )
-        
-        # Generate email template
-        email_template = self.agent.generate(
-            f"Create a professional negotiation email using the counter-proposal:\n"
-            f"{counter_proposal}\n\nInclude market data and case law to support the position.",
-            max_tokens=1000
-        )
-        
-        result = {
-            "original_clause": unfair_clause,
-            "analysis": analysis,
-            "market_data": market_data,
-            "similar_cases": cases,
-            "counter_proposal": counter_proposal,
-            "negotiation_tactics": tactics,
-            "email_template": email_template,
-            "risk_level": analysis["risk_level"]
+Explanation:"""
+
+        request_body = {
+            **self.model_kwargs,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
         }
+            
+        response = self.bedrock_client.invoke_model(
+            modelId=self.model_id,
+            body=json.dumps(request_body),
+            accept="application/json",
+            contentType="application/json"
+        )
         
-        # Save to memory if enabled
-        if self.memory_client and self.memory_id:
-            self.memory_client.add_memory(
-                self.memory_id,
-                session_id or "default",
-                result
-            )
+        response_body = json.loads(response.get('body').read().decode())
         
-        return result
+        return response_body.get("content")[0].get("text")
+    
+    def negotiate_terms(self, 
+                       current_terms: str,
+                       desired_changes: List[str],
+                       context: Optional[Dict] = None) -> Dict[str, str]:
+        """Generate negotiation strategy and response"""
+        
+        # Convert list to bullet points
+        changes_text = "\n".join(f"- {change}" for change in desired_changes)
+        context_text = "\n".join(f"{k}: {v}" for k,v in (context or {}).items())
+        
+        prompt = f"""{NEGOTIATION_SYSTEM_PROMPT}
 
-if __name__ == "__main__":
-    # Test the agent
-    agent = NegotiationAgent()
-    result = agent.negotiate(
-        unfair_clause="Payment: Net 90 days at $40/hour",
-        clause_type="payment_terms",
-        freelancer_info={
-            "role": "Software Developer",
-            "experience_years": 5,
-            "location": "usa-california"
+Current Terms: {current_terms}
+
+Desired Changes:
+{changes_text}
+
+Additional Context: {context_text}
+
+Please provide:
+1. Analysis of the situation
+2. Negotiation strategy
+3. Counter-proposal draft
+4. Email template"""
+
+        request_body = {
+            **self.model_kwargs,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
         }
-    )
-    print("Counter-proposal:", result["counter_proposal"])
-    print("Risk Level:", result["risk_level"])
+            
+        response = self.bedrock_client.invoke_model(
+            modelId=self.model_id,
+            body=json.dumps(request_body),
+            accept="application/json",
+            contentType="application/json"
+        )
+        
+        response_body = json.loads(response.get('body').read().decode())
+        
+        return {
+            "strategy": response_body.get("content")[0].get("text")
+        }
+    
+    def get_legal_advice(self, contract_text: str, question: str) -> str:
+        """Get legal analysis and advice about specific contract terms"""
+        
+        prompt = """Please provide legal analysis and advice regarding this contract question.
+Note: This is general guidance, not legal advice. Consult a lawyer for specific legal advice.
+
+Contract Text:
+""" + contract_text + """
+
+Question:
+""" + question + """
+
+Analysis:"""
+
+        request_body = {
+            **self.model_kwargs,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+            
+        response = self.bedrock_client.invoke_model(
+            modelId=self.model_id,
+            body=json.dumps(request_body),
+            accept="application/json",
+            contentType="application/json"
+        )
+        
+        response_body = json.loads(response.get('body').read().decode())
+        
+        return response_body.get("content")[0].get("text")
