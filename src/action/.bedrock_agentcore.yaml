@@ -1,0 +1,31 @@
+default_agent: freelancer_action_agent
+agents:
+  freelancer_action_agent:
+    name: freelancer_action_agent
+    entrypoint: D:/aws_hackathon/src/agents/action/action_agent_agentcore.py
+    platform: linux/arm64
+    container_runtime: docker
+    aws:
+      execution_role: arn:aws:iam::897722703585:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-68634593a8
+      execution_role_auto_create: false
+      account: '897722703585'
+      region: us-east-1
+      ecr_repository: 897722703585.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-freelancer_action_agent
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: freelancer_action_agent-Q83Rk73nkD
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:897722703585:runtime/freelancer_action_agent-Q83Rk73nkD
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-freelancer_action_agent-builder
+      execution_role: arn:aws:iam::897722703585:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-68634593a8
+      source_bucket: bedrock-agentcore-codebuild-sources-897722703585-us-east-1
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

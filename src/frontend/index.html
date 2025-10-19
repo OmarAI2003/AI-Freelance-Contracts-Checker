@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Legal Assistant - AI-Powered Contract Help</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div class="landing-container" id="landingPage">
+        <div class="landing-card">
+            <div class="logo">⚖️</div>
+            <h1>Freelancer Legal Assistant</h1>
+            <p>AI-powered legal guidance for your freelance contracts. Upload your contract or start chatting with our intelligent agent system.</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <h2>Upload Your Contract</h2>
+                <p>Drag and drop your contract here, or click to browse</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    <span>📎</span>
+                    Choose File
+                </button>
+                <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                
+                <div class="file-info" id="fileInfo">
+                    <span class="icon">✅</span>
+                    <div class="details">
+                        <div class="name" id="fileName">contract.pdf</div>
+                        <div class="size" id="fileSize">2.5 MB</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="upload-btn" id="continueBtn" style="width: 100%; display: none;">
+                Continue to Chat →
+            </button>
+            
+            <button class="skip-btn" onclick="startChat()">
+                Skip - Start Chat Without Contract
+            </button>
+            
+            <p style="margin-top: 2rem; font-size: 0.875rem; color: #94a3b8;">
+                Powered by AWS Bedrock AgentCore + Strands SDK
+            </p>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="chat-container" id="chatContainer">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <div class="agent-avatar" id="agentAvatar">🤖</div>
+                <div class="agent-info">
+                    <h2 id="agentName">Orchestrator Agent</h2>
+                    <div class="agent-status">
+                        <span class="status-dot"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" title="New Chat" onclick="resetChat()">🔄</button>
+                <button class="icon-btn" title="Upload File" onclick="document.getElementById('fileInput').click()">📎</button>
+                <button class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be added here dynamically -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-container">
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-action" onclick="sendQuickMessage('I need help analyzing a contract')">📊 Analyze Contract</button>
+                <button class="quick-action" onclick="sendQuickMessage('Can you explain legal terms?')">📖 Explain Terms</button>
+                <button class="quick-action" onclick="sendQuickMessage('I want to negotiate contract terms')">💼 Negotiate Terms</button>
+                <button class="quick-action" onclick="sendQuickMessage('My client won\'t pay me')">⚖️ Legal Action</button>
+            </div>
+            
+            <div class="chat-input-wrapper">
+                <div class="input-actions">
+                    <button class="attachment-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
+                        📎
+                    </button>
+                </div>
+                <textarea 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                    onkeydown="handleKeyPress(event)"
+                ></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

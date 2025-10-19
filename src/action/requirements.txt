@@ -1,0 +1,5 @@
+bedrock-agentcore
+strands-agents
+strands-agents-tools
+duckduckgo-search>=6.2.0
+boto3
