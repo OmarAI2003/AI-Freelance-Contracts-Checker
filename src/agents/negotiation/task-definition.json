@@ -1,0 +1,41 @@
+{
+    "memory":  "2048",
+    "executionRoleArn":  "arn:aws:iam::897722703585:role/ecsTaskExecutionRole",
+    "family":  "negotiation-agent-task",
+    "networkMode":  "awsvpc",
+    "requiresCompatibilities":  [
+                                    "FARGATE"
+                                ],
+    "containerDefinitions":  [
+                                 {
+                                     "name":  "negotiation-agent",
+                                     "logConfiguration":  {
+                                                              "logDriver":  "awslogs",
+                                                              "options":  {
+                                                                              "awslogs-region":  "us-east-1",
+                                                                              "awslogs-stream-prefix":  "ecs",
+                                                                              "awslogs-group":  "/ecs/negotiation-agent-task"
+                                                                          }
+                                                          },
+                                     "environment":  [
+                                                         {
+                                                             "value":  "us-east-1",
+                                                             "name":  "AWS_REGION"
+                                                         },
+                                                         {
+                                                             "value":  "ABSKQmVkcm9ja0FQSUtleS1wamwzLWF0LTg5NzcyMjcwMzU4NTpRcTF6ZlVsTS95Y1hCZkttbHpBRm1sSkl0ZGQ0SVNvNlowbVg0YlpVdTJZUGp1aEk2OUcwU0xMc0V3cz0=",
+                                                             "name":  "AWS_BEARER_TOKEN_BEDROCK"
+                                                         }
+                                                     ],
+                                     "essential":  true,
+                                     "image":  "897722703585.dkr.ecr.us-east-1.amazonaws.com/negotiation-agent:latest",
+                                     "portMappings":  [
+                                                          {
+                                                              "protocol":  "tcp",
+                                                              "containerPort":  8000
+                                                          }
+                                                      ]
+                                 }
+                             ],
+    "cpu":  "1024"
+}
