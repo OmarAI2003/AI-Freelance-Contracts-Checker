@@ -19,6 +19,10 @@ from duckduckgo_search import DDGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Global variable to store actual URLs from tool executions
+# This is populated by tools and used in post-processing
+ACTUAL_URLS_FROM_TOOLS = []
+
 # Initialize AgentCore App
 app = BedrockAgentCoreApp()
 
@@ -83,18 +87,53 @@ def search_similar_cases(issue_type: str, jurisdiction: str, contract_text: str 
         ddgs = DDGS()
         results = ddgs.text(search_query, region='us-en', safesearch='moderate', max_results=5)
         
-        # Format results
+        # Store actual URLs globally for post-processing
+        global ACTUAL_URLS_FROM_TOOLS
+        ACTUAL_URLS_FROM_TOOLS = []  # Reset for this invocation
+        
+        # Convert results to list (ddgs returns a generator)
+        results_list = list(results) if results else []
+        logger.info(f"📎 DuckDuckGo returned {len(results_list)} results")
+        
+        # Format results with clear citations that include all metadata
         formatted_results = []
-        for i, result in enumerate(results, 1):
+        formatted_results.append("🔍 **Similar Cases & Legal Resources Found:**\n")
+        formatted_results.append("(Include ALL details below in your response: Article Title, Source Website, Description, Full URL)\n")
+        
+        for i, result in enumerate(results_list, 1):
             title = result.get('title', 'No title')
             body = result.get('body', 'No description')
             href = result.get('href', '')
             
+            logger.info(f"📎 Processing result {i}: href={href[:50] if href else 'EMPTY'}")
+            
+            # Store the actual URL
+            if href:
+                ACTUAL_URLS_FROM_TOOLS.append(href)
+                logger.info(f"📎 ✅ Captured URL #{len(ACTUAL_URLS_FROM_TOOLS)}: {href}")
+            
+            # Extract website name from URL
+            website_name = "Unknown"
+            if href:
+                try:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(href)
+                    domain = parsed.netloc
+                    # Remove 'www.' and '.com'/'.org'/'.gov'/etc
+                    website_name = domain.replace('www.', '').split('.')[0].title()
+                except:
+                    website_name = "Unknown"
+            
             # Filter English-only content
             if _is_english_text(title + body):
-                formatted_results.append(f"{i}. **{title}**\n   {body}\n   Source: {href}\n")
+                formatted_results.append(f"\n📄 Result #{i}:")
+                formatted_results.append(f"   ARTICLE TITLE: {title}")
+                formatted_results.append(f"   SOURCE WEBSITE: {website_name}")
+                formatted_results.append(f"   DESCRIPTION: {body[:250]}")  # More context
+                formatted_results.append(f"   FULL URL: {href}\n")
         
-        if formatted_results:
+        if len(formatted_results) > 2:  # More than just the headers
+            formatted_results.append("\n💡 **CRITICAL:** In your response, cite each result with its full ARTICLE TITLE, SOURCE WEBSITE, DESCRIPTION, and FULL URL!")
             return "\n".join(formatted_results)
         else:
             # Fallback to curated resources
@@ -137,7 +176,10 @@ Provide a numbered action plan with:
 2. Short-term actions (next 1-2 weeks)
 3. Long-term considerations (if issue persists)
 
-Be specific, practical, and empathetic. Focus on documentation, communication, and escalation paths."""
+Be specific, practical, and empathetic. Focus on documentation, communication, and escalation paths.
+
+End with: "This action plan was generated using AI analysis based on your specific situation and legal best practices."
+"""
 
         # Try multiple models for fallback
         models = [
@@ -158,7 +200,14 @@ Be specific, practical, and empathetic. Focus on documentation, communication, a
                 )
                 
                 result = json.loads(response['body'].read())
-                return result['content'][0]['text']
+                action_plan = result['content'][0]['text']
+                
+                # Add citation footer
+                action_plan += "\n\n📋 *This action plan was AI-generated based on your specific situation: ${:,.0f} in {}, {} days since issue.*".format(
+                    amount_at_stake, jurisdiction, days_since_issue
+                )
+                
+                return action_plan
             except Exception as e:
                 logger.warning(f"Model {model_id} failed: {e}")
                 continue
@@ -315,10 +364,17 @@ def get_evidence_checklist(issue_type: str) -> str:
    - Change request documentation
    - Client acknowledgment of extras
    - Budget discussions
+
+📌 *This checklist is based on legal best practices and common requirements for dispute resolution.*
 """
     }
     
-    return checklists.get(issue_type, "Invalid issue type. Use: non_payment, breach_of_contract, ip_theft, or scope_creep")
+    checklist = checklists.get(issue_type, "Invalid issue type. Use: non_payment, breach_of_contract, ip_theft, or scope_creep")
+    
+    if checklist != "Invalid issue type. Use: non_payment, breach_of_contract, ip_theft, or scope_creep":
+        return checklist
+    else:
+        return checklist
 
 
 @tool
@@ -563,70 +619,65 @@ def create_agent():
     """Create and configure the Strands agent with all tools."""
     logger.info("Creating Action Agent with Strands + AgentCore...")
     
-    # Create Bedrock model - Using Claude 3.5 Sonnet for MUCH better tool calling
-    # Haiku is too weak and hallucinates tool results instead of actually calling them
+    # Create Bedrock model - Using Amazon Nova Pro (fast and reliable)
+    # Nova Pro: 25-35s response time (fits within API Gateway 30s limit with retry)
+    # Claude 3.5 Sonnet v2 was too slow (40-50s) causing timeouts
+    # Nova Pro can still follow the enhanced citation format well enough
     model = BedrockModel(
-        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
+        model_id="us.amazon.nova-pro-v1:0"
     )
     
-    # System prompt for conversational AI with strong tool usage guidance
-    system_prompt = """You are a legal action assistant for freelancers with contract disputes.
+    # System prompt - Instructs agent to include article titles and descriptions for better citations
+    system_prompt = """You are a legal action assistant for freelancers.
 
-🎯 **Your Role:**
-Help freelancers understand their options and take appropriate action after experiencing contract problems with clients.
+CRITICAL CITATION RULES:
+When citing search results, you MUST include:
+1. **Full Article Title** (exactly as found in search_similar_cases)
+2. **Website Name** (e.g., "Nolo.com", "Citizens Advice", "Gov.UK")
+3. **Brief Description** (1-2 sentences about what the article covers)
+4. **Full URL** (copy exactly from search results)
 
-💬 **Conversational Approach:**
-- Start by greeting the user warmly
-- Ask clarifying questions to understand their situation
-- **USE YOUR TOOLS ACTIVELY** - don't give generic advice!
-- Explain results in simple, empathetic terms
-- Provide actionable next steps
+EXAMPLE FORMAT:
+📄 "Freelance Payment Disputes: Your Legal Options" 
+   Source: Nolo.com Legal Encyclopedia
+   Description: Comprehensive guide covering late payment laws, demand letters, and small claims court procedures for freelancers in the UK and US.
+   URL: https://www.nolo.com/legal-encyclopedia/freelance-disputes-32847.html
 
-🛠️ **YOUR TOOLS - USE THEM!:**
+TOOLS:
+1. search_similar_cases - Use when user describes issue
+2. generate_action_plan - Use after understanding situation  
+3. get_evidence_checklist - Use for documentation guidance
+4. get_legal_resources - Use for legal options
 
-1. **search_similar_cases** - ALWAYS use when user describes their issue
-   - Example: User says "My client won't pay $7000 for freelance work in USA"
-   - Action: IMMEDIATELY call search_similar_cases(issue_type="non_payment", jurisdiction="USA", contract_text="")
-   
-2. **generate_action_plan** - ALWAYS use after understanding the situation
-   - Example: User provides issue details
-   - Action: Call generate_action_plan(issue_type="non_payment", amount=7000, jurisdiction="USA", timeline="overdue", evidence_available=False)
-   
-3. **get_evidence_checklist** - Use when user asks what to prepare
-   - Example: User asks "What evidence do I need?"
-   - Action: Call get_evidence_checklist(issue_type="non_payment")
-   
-4. **get_legal_resources** - Use when user asks about legal options
-   - Example: User wants to know next steps
-   - Action: Call get_legal_resources(jurisdiction="USA", issue_type="non_payment")
+REQUIRED STRUCTURE FOR EVERY RESPONSE:
 
-📋 **IMPORTANT - Information Gathering:**
-Once you have these basics, USE YOUR TOOLS:
-- Issue type: non-payment, breach, IP theft, scope creep
-- Amount involved: $X
-- Jurisdiction: USA, UK, EU
-- Timeline: when was payment due?
+1. **Start with the Action Plan** (what they should do)
+2. **Include Evidence Checklist** (what to gather)
+3. **End with Sources & References** (where you got the information)
 
-❌ **DO NOT:**
-- Give generic legal advice without using tools
-- Say "you should send a demand letter" without calling generate_action_plan
-- Mention "similar cases" without calling search_similar_cases
-- List evidence without calling get_evidence_checklist
+EXACT FORMAT:
+---
 
-✅ **DO:**
-- Call search_similar_cases when user first describes issue
-- Call generate_action_plan once you have amount + jurisdiction + issue type
-- Use tools even if user doesn't explicitly ask
-- Combine tool results with empathetic explanations
+Action Plan: AI-generated for your situation
+[Include the detailed action plan here]
 
-**Example Conversation:**
-User: "My client won't pay me $7000 for freelance work in USA"
-You: "I understand - non-payment is frustrating. Let me search for similar cases and create an action plan for you."
-[CALL search_similar_cases(issue_type="non_payment", jurisdiction="USA")]
-[CALL generate_action_plan(issue_type="non_payment", amount=7000, jurisdiction="USA", timeline="overdue")]
-Then provide results with empathy.
+Evidence Checklist:
+[Include what documents they need]
 
-Start by introducing yourself and asking how you can help!"""
+---
+
+**Sources & References:**
+*Similar Cases (via web search):*
+
+📄 "Article Title Here"
+   Source: Website Name
+   Description: What the article covers
+   URL: https://full-url-here
+
+[Repeat for each search result]
+
+---
+This is general advice. Consult a licensed attorney for specific guidance."""
     
     # Import conversation manager
     from strands.agent.conversation_manager import SummarizingConversationManager
@@ -755,11 +806,115 @@ def invoke(payload):
             response = action_agent(user_message)
         
         logger.info(f"Agent response: {response.message}")
-        return {"result": response.message}
+        logger.info(f"🔍 Response object type: {type(response)}")
+        logger.info(f"🔍 Response attributes: {dir(response)}")
+        
+        # Extract tool traces for URL extraction
+        # Strands AgentResult has: message, state, metrics, stop_reason
+        tool_traces = []
+        
+        # Check state attribute for tool execution traces
+        if hasattr(response, 'state') and response.state:
+            logger.info(f"📋 Checking state object: {type(response.state)}")
+            logger.info(f"📋 State keys: {dir(response.state) if hasattr(response.state, '__dir__') else 'not inspectable'}")
+            
+            # State might contain tool calls/results
+            state_str = str(response.state)
+            logger.info(f"📋 State preview (first 500 chars): {state_str[:500]}")
+            tool_traces.append(state_str)
+        
+        # Also check if intermediate_steps exists (from older Strands versions)
+        if hasattr(response, 'intermediate_steps'):
+            logger.info(f"📋 Found intermediate_steps: {len(response.intermediate_steps)} steps")
+            tool_traces.extend(response.intermediate_steps)
+        
+        # Clean up the response - ensure it's a string
+        import re
+        
+        # Extract text from response.message (might be dict or string)
+        if isinstance(response.message, dict):
+            # If it's a dict with 'content' key
+            if 'content' in response.message:
+                content = response.message['content']
+                if isinstance(content, list):
+                    # Extract text from content array
+                    texts = []
+                    for item in content:
+                        if isinstance(item, dict) and 'text' in item:
+                            texts.append(item['text'])
+                        elif isinstance(item, str):
+                            texts.append(item)
+                    final_response = '\n'.join(texts)
+                else:
+                    final_response = str(content)
+            elif 'text' in response.message:
+                final_response = response.message['text']
+            else:
+                final_response = str(response.message)
+        else:
+            final_response = str(response.message)
+        
+        # Remove <thinking> tags and content
+        final_response = re.sub(r'<thinking>.*?</thinking>', '', final_response, flags=re.DOTALL)
+        
+        # Remove "You may use the following tools:" section that leaks through
+        if "You may use the following tools:" in final_response:
+            logger.info("⚠️ Tool descriptions leaked into response, removing...")
+            final_response = final_response.split("You may use the following tools:")[0]
+        
+        # Also remove JSON tool definitions if they leaked
+        if '{"name":' in final_response:
+            logger.info("⚠️ JSON tool definitions leaked, removing...")
+            # Find the last occurrence of actual content before tool definitions
+            parts = final_response.split('{"name":')
+            final_response = parts[0]
+        
+        # Trim extra whitespace
+        final_response = final_response.strip()
+        
+        # Post-process response to append actual URLs from tool executions
+        # Use the global variable populated by search_similar_cases
+        try:
+            global ACTUAL_URLS_FROM_TOOLS
+            
+            logger.info(f"� Checking global URL storage: {len(ACTUAL_URLS_FROM_TOOLS)} URLs captured")
+            
+            if ACTUAL_URLS_FROM_TOOLS:
+                # Remove duplicates while preserving order
+                unique_urls = list(dict.fromkeys(ACTUAL_URLS_FROM_TOOLS))
+                logger.info(f"� Unique URLs after dedup: {len(unique_urls)}")
+                logger.info(f"📎 URLs: {unique_urls[:5]}")
+                
+                # Append actual URLs to response
+                final_response += "\n\n---\n\n"
+                final_response += "🔗 **Actual Sources from Web Search:**\n"
+                for url in unique_urls[:5]:  # Max 5 URLs
+                    final_response += f"- {url}\n"
+                final_response += "\n💡 These are the actual URLs retrieved from DuckDuckGo search during this conversation."
+                
+                logger.info(f"✅ Successfully appended {len(unique_urls[:5])} URLs to response")
+            else:
+                logger.warning("⚠️ No URLs captured in global variable")
+        except Exception as url_error:
+            logger.error(f"❌ Could not append URLs: {url_error}", exc_info=True)
+        
+        # Return in AgentCore format that Lambda expects
+        # Format: {"result": {"role": "assistant", "content": [{"text": "..."}]}}
+        return {
+            "result": {
+                "role": "assistant",
+                "content": [{"text": final_response}]
+            }
+        }
         
     except Exception as e:
         logger.error(f"Error in invoke: {e}", exc_info=True)
-        return {"result": f"I encountered an error: {str(e)}. Please try again."}
+        return {
+            "result": {
+                "role": "assistant",
+                "content": [{"text": f"I encountered an error: {str(e)}. Please try again."}]
+            }
+        }
 
 
 # ============================================================================
@@ -769,3 +924,4 @@ def invoke(payload):
 if __name__ == "__main__":
     logger.info("🚀 Starting Action Agent with AgentCore Runtime...")
     app.run()
+

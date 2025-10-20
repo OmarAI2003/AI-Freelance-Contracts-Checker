@@ -385,6 +385,13 @@ function showTypingIndicator() {
     const typingDiv = document.createElement('div');
     typingDiv.className = 'message agent';
     typingDiv.id = 'typingIndicator';
+    
+    // Show helpful message for Action Agent (takes 30-40 seconds)
+    const isActionAgent = state.currentAgent === 'action';
+    const progressText = isActionAgent ? 
+        '<div style="font-size: 0.85em; color: #666; margin-top: 4px;">⏱️ Analyzing your case (this may take 30-40 seconds)...</div>' : 
+        '';
+    
     typingDiv.innerHTML = `
         <div class="message-avatar" style="background: linear-gradient(135deg, ${getAgentGradient(state.currentAgent)})">${AGENTS[state.currentAgent].emoji}</div>
         <div class="message-content">
@@ -393,6 +400,7 @@ function showTypingIndicator() {
                 <div class="typing-dot"></div>
                 <div class="typing-dot"></div>
             </div>
+            ${progressText}
         </div>
     `;
     
@@ -420,14 +428,28 @@ async function processUserMessage(message) {
         const intent = classifyIntent(message);
         console.log('🧠 Intent detected:', intent);
         
+        // Show agent switch immediately if different from current
+        if (state.currentAgent !== intent.agent) {
+            showAgentSwitchNotification(intent.agent);
+            state.currentAgent = intent.agent;
+            updateAgentHeader(intent.agent);
+        }
+        
+        // Show typing indicator immediately
+        showTypingIndicator();
+        
         // Route to appropriate agent
         const response = await routeToAgent(intent, message);
         
-        // Add agent response
-        addAgentMessage(intent.agent, response);
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        // Add agent response (showTyping=false since we already showed it)
+        addAgentMessage(intent.agent, response, false);
         
     } catch (error) {
         console.error('❌ Error processing message:', error);
+        hideTypingIndicator();
         addAgentMessage('orchestrator', 'I apologize, but I encountered an error processing your request. Please try again.');
     } finally {
         state.isProcessing = false;
@@ -522,7 +544,10 @@ function buildContext() {
 // AGENT API CALLS
 // ============================================================================
 
-async function callRealActionAgent(message, context) {
+async function callRealActionAgent(message, context, retryCount = 0) {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 3000; // 3 seconds
+    
     try {
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
@@ -537,8 +562,36 @@ async function callRealActionAgent(message, context) {
             })
         });
         
+        // Handle 503 Service Unavailable (API Gateway timeout)
+        if (response.status === 503) {
+            console.warn(`⚠️ API Gateway timeout (503) - Agent is still processing...`);
+            
+            if (retryCount < MAX_RETRIES) {
+                console.log(`🔄 Retrying (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+                await sleep(RETRY_DELAY);
+                return await callRealActionAgent(message, context, retryCount + 1);
+            } else {
+                return `⏱️ The agent is taking longer than expected. This happens when analyzing complex legal situations. Please try again, or if the issue persists, try simplifying your question.`;
+            }
+        }
+        
         const data = await response.json();
-        return data.response;
+        console.log('📦 Lambda response:', data);  // Debug logging
+        console.log('📦 Response keys:', Object.keys(data));  // Debug keys
+        console.log('📦 Response.response type:', typeof data.response);  // Debug type
+        console.log('📦 Response.response value:', data.response);  // Debug value
+        
+        // Handle the response - Lambda returns { response: "...", agent: "...", sessionId: "..." }
+        if (data.response) {
+            return data.response;
+        } else if (data.error) {
+            console.error('❌ Lambda error:', data.error);
+            return `Error: ${data.error}`;
+        } else {
+            console.error('❌ Unexpected response format:', data);
+            console.error('❌ Full response string:', JSON.stringify(data, null, 2));
+            return 'I received an unexpected response format. Please try again.';
+        }
         
     } catch (error) {
         console.error('❌ Error calling Action Agent:', error);

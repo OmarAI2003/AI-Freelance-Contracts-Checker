@@ -93,6 +93,14 @@ def handle_chat(body: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Extract parameters
         user_message = body.get('prompt', '')
         session_id = body.get('sessionId', str(uuid.uuid4()))
+        
+        # AWS Bedrock AgentCore requires session IDs to be at least 33 characters
+        # Generate a new one if provided session ID is too short
+        if len(session_id) < 33:
+            logger.info(f"⚠️ Session ID too short ({len(session_id)} chars), generating new one")
+            session_id = f"session-{int(datetime.utcnow().timestamp() * 1000)}-{uuid.uuid4().hex}"
+            logger.info(f"✅ New session ID: {session_id} ({len(session_id)} chars)")
+        
         requested_agent = body.get('agent')  # Optional
         
         if not user_message:
@@ -297,18 +305,28 @@ def call_bedrock_agent_a2a(
                 response_json = json.loads(response_data)
                 
                 # Extract text from AgentCore response format
-                # Format: {"result": {"role": "assistant", "content": [{"text": "..."}]}}
+                # Format: {"result": "text"} OR {"result": {"role": "assistant", "content": [{"text": "..."}]}}
                 if 'result' in response_json:
                     result = response_json['result']
-                    if 'content' in result and isinstance(result['content'], list):
-                        # Extract text from content array
-                        texts = []
-                        for item in result['content']:
-                            if 'text' in item:
-                                texts.append(item['text'])
-                        agent_response = '\n'.join(texts)
-                    elif 'text' in result:
-                        agent_response = result['text']
+                    
+                    # Handle different result formats
+                    if isinstance(result, str):
+                        # Direct string result (from our post-processing)
+                        agent_response = result
+                    elif isinstance(result, dict):
+                        # Dict result (standard AgentCore format)
+                        if 'content' in result and isinstance(result['content'], list):
+                            # Extract text from content array
+                            texts = []
+                            for item in result['content']:
+                                if 'text' in item:
+                                    texts.append(item['text'])
+                            agent_response = '\n'.join(texts)
+                        elif 'text' in result:
+                            agent_response = result['text']
+                    else:
+                        # Fallback: convert to string
+                        agent_response = str(result)
                 elif 'output' in response_json:
                     agent_response = response_json['output']
                 elif 'text' in response_json:
