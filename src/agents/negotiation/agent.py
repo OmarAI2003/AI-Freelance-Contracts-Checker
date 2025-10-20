@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from langchain_community.llms.bedrock import Bedrock
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from .prompts import (
+from prompts import (
     NEGOTIATION_SYSTEM_PROMPT,
     CLAUSE_ANALYSIS_PROMPT,
     NEGOTIATION_TACTICS_PROMPT
@@ -18,27 +18,23 @@ class NegotiationAgent:
         """Initialize Negotiation Agent"""
         load_dotenv()
         
-        # Initialize Bedrock client with bearer token
+        # Initialize Bedrock client with IAM credentials
         import boto3
-        session = boto3.Session(region_name=os.getenv("AWS_REGION"))
         
-        bedrock_runtime = session.client(
+        # Use default credential chain (will use IAM role when running on ECS)
+        bedrock_runtime = boto3.client(
             service_name='bedrock-runtime',
-            region_name=os.getenv("AWS_REGION"),
-            aws_access_key_id="",
-            aws_secret_access_key="",
-            aws_session_token=os.getenv("AWS_BEARER_TOKEN_BEDROCK")
+            region_name=os.getenv("AWS_REGION", "us-east-1")
         )
         
-        # Use invoke directly with raw request format for Claude 3.5 Sonnet
+        # Use invoke directly with raw request format for Claude 3
         self.bedrock_client = bedrock_runtime
         self.model_kwargs = {
             "anthropic_version": "bedrock-2023-05-31",
             "temperature": 0.7,
             "max_tokens": 2048
         }
-        # Updated to Claude 3.5 Sonnet for improved performance
-        self.model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+        self.model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
         
         # Initialize output parser
         self.output_parser = StrOutputParser()
