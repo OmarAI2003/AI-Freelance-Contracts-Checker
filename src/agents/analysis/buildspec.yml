@@ -1,0 +1,12 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 897722703585.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building ARM64 Docker image for AgentCore...
+      - docker build --platform linux/arm64 -t 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis:latest .
+      - docker push 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis:latest

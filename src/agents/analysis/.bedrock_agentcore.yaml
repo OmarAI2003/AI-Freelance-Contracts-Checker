@@ -1,0 +1,21 @@
+name: contractguard-analysis
+description: AI agent for analyzing freelance contracts and detecting unfair terms
+version: 1.0.0
+runtime: python3.11
+handler: handler.py
+memory_id: contractguard-memory
+guardrail_id: contractguard-guardrail
+
+dependencies:
+  - boto3>=1.34.0
+  - bedrock-agentcore>=0.1.0
+  - strands>=0.1.0
+
+tools:
+  - contract_parser
+  - jurisdiction_checker
+  - enhanced_jurisdiction_checker
+
+environment:
+  AWS_REGION: us-east-1
+  LOG_LEVEL: INFO
