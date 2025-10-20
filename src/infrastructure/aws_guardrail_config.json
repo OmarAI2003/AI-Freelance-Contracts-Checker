@@ -1,0 +1,135 @@
+{
+  "name": "ContractGuard-AI-Safety-Guardrail",
+  "description": "Multi-layered safety guardrail for freelance contract analysis agents",
+  "blockedInputMessaging": "This input violates our content policy. Please revise your request.",
+  "blockedOutputsMessaging": "I cannot provide this response as it violates our content policy.",
+  "topicPolicyConfig": {
+    "topicsConfig": [
+      {
+        "name": "illegal_contract_advice",
+        "definition": "Advice on creating illegal contracts, tax evasion, or circumventing labor laws",
+        "examples": [
+          "How to avoid paying taxes on freelance income",
+          "Creating contracts to exploit workers",
+          "Bypassing minimum wage requirements"
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "unauthorized_legal_practice",
+        "definition": "Providing specific legal advice that constitutes practicing law without license",
+        "examples": [
+          "Specific legal representation advice",
+          "Court filing instructions",
+          "Definitive legal outcomes predictions"
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "personal_information_extraction",
+        "definition": "Attempting to extract personal or confidential information beyond contract analysis",
+        "examples": [
+          "Personal financial information",
+          "Social security numbers",
+          "Private contact details"
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "competitive_intelligence",
+        "definition": "Using contract analysis to gather competitive business intelligence",
+        "examples": [
+          "Extracting client lists",
+          "Gathering pricing strategies",
+          "Identifying business partnerships"
+        ],
+        "type": "DENY"
+      }
+    ]
+  },
+  "contentPolicyConfig": {
+    "filtersConfig": [
+      {
+        "type": "HATE",
+        "inputStrength": "HIGH",
+        "outputStrength": "HIGH"
+      },
+      {
+        "type": "INSULTS",
+        "inputStrength": "MEDIUM",
+        "outputStrength": "MEDIUM"
+      },
+      {
+        "type": "SEXUAL",
+        "inputStrength": "HIGH",
+        "outputStrength": "HIGH"
+      },
+      {
+        "type": "VIOLENCE",
+        "inputStrength": "MEDIUM",
+        "outputStrength": "MEDIUM"
+      },
+      {
+        "type": "MISCONDUCT",
+        "inputStrength": "HIGH",
+        "outputStrength": "HIGH"
+      },
+      {
+        "type": "PROMPT_ATTACK",
+        "inputStrength": "HIGH",
+        "outputStrength": "NONE"
+      }
+    ]
+  },
+  "wordPolicyConfig": {
+    "wordsConfig": [
+      {
+        "text": "legal advice"
+      },
+      {
+        "text": "attorney-client privilege"
+      }
+    ],
+    "managedWordListsConfig": [
+      {
+        "type": "PROFANITY"
+      }
+    ]
+  },
+  "sensitiveInformationPolicyConfig": {
+    "piiEntitiesConfig": [
+      {
+        "type": "US_SOCIAL_SECURITY_NUMBER",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "CREDIT_DEBIT_CARD_NUMBER",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "US_BANK_ACCOUNT_NUMBER",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "PHONE",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "EMAIL",
+        "action": "ANONYMIZE"
+      }
+    ]
+  },
+  "contextualGroundingPolicyConfig": {
+    "filtersConfig": [
+      {
+        "type": "GROUNDING",
+        "threshold": 0.8
+      },
+      {
+        "type": "RELEVANCE",
+        "threshold": 0.8
+      }
+    ]
+  }
+}

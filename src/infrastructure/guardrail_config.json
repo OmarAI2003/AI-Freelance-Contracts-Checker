@@ -1,0 +1,245 @@
+{
+  "guardrail": {
+    "name": "contractguard-comprehensive-guardrail",
+    "description": "Comprehensive guardrail for AI-Freelance-Contracts-Checker agents ensuring safe, accurate, and compliant contract analysis",
+    "version": "1.0.0",
+    
+    "step1_details": {
+      "name": "ContractGuard AI Safety Guardrail",
+      "description": "Multi-layered safety guardrail for freelance contract analysis agents",
+      "tags": {
+        "project": "AI-Freelance-Contracts-Checker",
+        "environment": "production",
+        "compliance": "legal-analysis"
+      }
+    },
+    
+    "step2_content_filters": {
+      "hate_speech": {
+        "enabled": true,
+        "strength": "HIGH",
+        "action": "BLOCK"
+      },
+      "insults": {
+        "enabled": true,
+        "strength": "MEDIUM",
+        "action": "BLOCK"
+      },
+      "sexual_content": {
+        "enabled": true,
+        "strength": "HIGH",
+        "action": "BLOCK"
+      },
+      "violence": {
+        "enabled": true,
+        "strength": "MEDIUM",
+        "action": "BLOCK"
+      },
+      "misconduct": {
+        "enabled": true,
+        "strength": "HIGH",
+        "action": "BLOCK"
+      },
+      "prompt_attack": {
+        "enabled": true,
+        "strength": "HIGH",
+        "action": "BLOCK"
+      }
+    },
+    
+    "step3_denied_topics": [
+      {
+        "name": "illegal_contract_advice",
+        "definition": "Advice on creating illegal contracts, tax evasion, or circumventing labor laws",
+        "examples": [
+          "How to avoid paying taxes on freelance income",
+          "Creating contracts to exploit workers",
+          "Bypassing minimum wage requirements"
+        ]
+      },
+      {
+        "name": "unauthorized_legal_practice",
+        "definition": "Providing specific legal advice that constitutes practicing law without license",
+        "examples": [
+          "Specific legal representation advice",
+          "Court filing instructions",
+          "Definitive legal outcomes predictions"
+        ]
+      },
+      {
+        "name": "personal_information_extraction",
+        "definition": "Attempting to extract personal or confidential information beyond contract analysis",
+        "examples": [
+          "Personal financial information",
+          "Social security numbers",
+          "Private contact details"
+        ]
+      },
+      {
+        "name": "competitive_intelligence",
+        "definition": "Using contract analysis to gather competitive business intelligence",
+        "examples": [
+          "Extracting client lists",
+          "Gathering pricing strategies",
+          "Identifying business partnerships"
+        ]
+      }
+    ],
+    
+    "step4_word_filters": {
+      "profanity": {
+        "enabled": true,
+        "action": "BLOCK",
+        "words": ["explicit profanity list would go here"]
+      },
+      "legal_disclaimers": {
+        "enabled": true,
+        "action": "REQUIRE",
+        "trigger_words": ["legal advice", "lawsuit", "court", "attorney"],
+        "required_disclaimer": "This analysis is for informational purposes only and does not constitute legal advice. Consult with a qualified attorney for specific legal guidance."
+      }
+    },
+    
+    "step5_sensitive_information_filters": {
+      "pii_detection": {
+        "enabled": true,
+        "types": [
+          "SSN",
+          "CREDIT_CARD",
+          "BANK_ACCOUNT",
+          "PHONE_NUMBER",
+          "EMAIL_ADDRESS",
+          "PASSPORT_NUMBER",
+          "DRIVER_LICENSE"
+        ],
+        "action": "ANONYMIZE",
+        "replacement_pattern": "[REDACTED_{{TYPE}}]"
+      },
+      "financial_information": {
+        "enabled": true,
+        "patterns": [
+          "salary ranges above general market data",
+          "specific bank details",
+          "tax identification numbers"
+        ],
+        "action": "MASK"
+      },
+      "confidential_business_data": {
+        "enabled": true,
+        "patterns": [
+          "proprietary algorithms",
+          "trade secrets",
+          "internal business processes"
+        ],
+        "action": "BLOCK"
+      }
+    },
+    
+    "step6_contextual_grounding": {
+      "enabled": true,
+      "knowledge_bases": [
+        {
+          "name": "freelance_laws_kb",
+          "description": "Freelance and employment laws by jurisdiction",
+          "priority": "HIGH"
+        },
+        {
+          "name": "contract_templates_kb", 
+          "description": "Standard contract templates and clauses",
+          "priority": "MEDIUM"
+        },
+        {
+          "name": "legal_precedents_kb",
+          "description": "Relevant legal cases and precedents",
+          "priority": "MEDIUM"
+        }
+      ],
+      "grounding_threshold": 0.8,
+      "citation_required": true,
+      "hallucination_detection": {
+        "enabled": true,
+        "confidence_threshold": 0.7,
+        "action": "FLAG_AND_CITE"
+      }
+    },
+    
+    "step7_automated_reasoning": {
+      "enabled": true,
+      "reasoning_checks": [
+        {
+          "name": "legal_consistency",
+          "description": "Ensure legal analysis is consistent across jurisdictions",
+          "threshold": 0.85
+        },
+        {
+          "name": "risk_assessment_logic",
+          "description": "Validate risk level assignments follow logical progression",
+          "threshold": 0.9
+        },
+        {
+          "name": "evidence_support",
+          "description": "Ensure all claims are supported by evidence from knowledge base",
+          "threshold": 0.8
+        }
+      ],
+      "contradiction_detection": {
+        "enabled": true,
+        "action": "FLAG_AND_EXPLAIN"
+      },
+      "logical_fallacy_detection": {
+        "enabled": true,
+        "types": ["hasty_generalization", "false_dichotomy", "appeal_to_authority"]
+      }
+    },
+    
+    "agent_specific_rules": {
+      "analysis_agent": {
+        "max_risk_escalation": "CRITICAL",
+        "required_evidence_sources": 2,
+        "jurisdiction_validation": "REQUIRED"
+      },
+      "explanation_agent": {
+        "reading_level": "8th_grade",
+        "technical_term_definitions": "REQUIRED",
+        "plain_language_requirement": true
+      },
+      "negotiation_agent": {
+        "ethical_negotiation_only": true,
+        "no_aggressive_tactics": true,
+        "collaborative_approach": "REQUIRED"
+      }
+    },
+    
+    "compliance_requirements": {
+      "gdpr_compliance": {
+        "enabled": true,
+        "data_minimization": true,
+        "consent_tracking": true
+      },
+      "ccpa_compliance": {
+        "enabled": true,
+        "data_deletion_rights": true
+      },
+      "legal_ethics": {
+        "unauthorized_practice_prevention": true,
+        "conflict_of_interest_detection": true,
+        "confidentiality_protection": true
+      }
+    },
+    
+    "monitoring_and_logging": {
+      "guardrail_violations": {
+        "log_level": "WARNING",
+        "cloudwatch_group": "/aws/bedrock/guardrails/contractguard"
+      },
+      "performance_metrics": {
+        "response_time_threshold": 30000,
+        "accuracy_threshold": 0.85
+      },
+      "audit_trail": {
+        "enabled": true,
+        "retention_days": 90
+      }
+    }
+  }
+}

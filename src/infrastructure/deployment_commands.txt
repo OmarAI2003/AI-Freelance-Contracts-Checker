@@ -1,0 +1,7 @@
+# Deploy guardrail using AWS CLI:
+aws bedrock create-guardrail --cli-input-json file://c:\Users\A\Desktop\AI-Freelance-Contracts-Checker\src\infrastructure\aws_guardrail_config.json
+
+# Create version:
+aws bedrock create-guardrail-version --guardrail-identifier <GUARDRAIL_ID> --description 'Production version'
+
+# Update agent configs with guardrail ID and version

@@ -1,0 +1,47 @@
+[
+  {
+    "test": "Analysis agent - technical language OK",
+    "passed": true,
+    "expected": "ALLOW",
+    "actual": "ALLOW"
+  },
+  {
+    "test": "Explanation agent - too technical",
+    "passed": true,
+    "expected": "FLAG",
+    "actual": "FLAG"
+  },
+  {
+    "test": "Negotiation agent - collaborative language",
+    "passed": true,
+    "expected": "ALLOW",
+    "actual": "ALLOW"
+  },
+  {
+    "test": "Negotiation agent - aggressive language",
+    "passed": true,
+    "expected": "BLOCK",
+    "actual": "BLOCK"
+  },
+  {
+    "test": "Legal content needs disclaimer",
+    "passed": true,
+    "expected_disclaimer": true,
+    "has_disclaimer": true,
+    "action": "ANONYMIZE"
+  },
+  {
+    "test": "Already has disclaimer",
+    "passed": true,
+    "expected_disclaimer": false,
+    "has_disclaimer": false,
+    "action": "ALLOW"
+  },
+  {
+    "test": "Non-legal content",
+    "passed": false,
+    "expected_disclaimer": false,
+    "has_disclaimer": null,
+    "action": "FLAG"
+  }
+]
