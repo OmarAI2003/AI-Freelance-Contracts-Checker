@@ -1,11 +1,26 @@
 """API endpoints for the Negotiation Agent"""
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from .agent import NegotiationAgent
+from agent import NegotiationAgent
 
-app = FastAPI()
+app = FastAPI(
+    title="Freelance Negotiation Agent API",
+    description="AI-powered contract negotiation assistance for freelancers",
+    version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Update with your frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 agent = NegotiationAgent()
 
 class AnalyzeRequest(BaseModel):
@@ -22,6 +37,24 @@ class NegotiateRequest(BaseModel):
 class LegalAdviceRequest(BaseModel):
     contract_text: str
     question: str
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Freelance Negotiation Agent API",
+        "version": "1.0.0",
+        "status": "online",
+        "endpoints": [
+            "/analyze - Analyze contract terms",
+            "/explain - Explain legal terms",
+            "/negotiate - Generate negotiation strategy",
+            "/legal-advice - Get legal guidance"
+        ]
+    }
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "negotiation-agent"}
 
 @app.post("/analyze")
 async def analyze_contract(request: AnalyzeRequest):

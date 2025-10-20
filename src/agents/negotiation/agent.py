@@ -30,14 +30,15 @@ class NegotiationAgent:
             aws_session_token=os.getenv("AWS_BEARER_TOKEN_BEDROCK")
         )
         
-        # Use invoke directly with raw request format for Claude 3
+        # Use invoke directly with raw request format for Claude 3.5 Sonnet
         self.bedrock_client = bedrock_runtime
         self.model_kwargs = {
             "anthropic_version": "bedrock-2023-05-31",
             "temperature": 0.7,
             "max_tokens": 2048
         }
-        self.model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+        # Updated to Claude 3.5 Sonnet for improved performance
+        self.model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
         
         # Initialize output parser
         self.output_parser = StrOutputParser()
