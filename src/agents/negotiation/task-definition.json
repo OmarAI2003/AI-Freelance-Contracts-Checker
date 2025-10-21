@@ -1,8 +1,8 @@
 {
     "memory":  "2048",
-    "executionRoleArn":  "arn:aws:iam::897722703585:role/ecsTaskExecutionRole",
+    "executionRoleArn":  "",
     "family":  "negotiation-agent-task",
-    "networkMode":  "awsvpc",
+    "networkMode":  "",
     "requiresCompatibilities":  [
                                     "FARGATE"
                                 ],
@@ -12,23 +12,23 @@
                                      "logConfiguration":  {
                                                               "logDriver":  "awslogs",
                                                               "options":  {
-                                                                              "awslogs-region":  "us-east-1",
+                                                                              "awslogs-region":  "",
                                                                               "awslogs-stream-prefix":  "ecs",
-                                                                              "awslogs-group":  "/ecs/negotiation-agent-task"
+                                                                              "awslogs-group":  ""
                                                                           }
                                                           },
                                      "environment":  [
                                                          {
-                                                             "value":  "us-east-1",
+                                                             "value":  "",
                                                              "name":  "AWS_REGION"
                                                          },
                                                          {
-                                                             "value":  "ABSKQmVkcm9ja0FQSUtleS1wamwzLWF0LTg5NzcyMjcwMzU4NTpRcTF6ZlVsTS95Y1hCZkttbHpBRm1sSkl0ZGQ0SVNvNlowbVg0YlpVdTJZUGp1aEk2OUcwU0xMc0V3cz0=",
+                                                             "value":  "",
                                                              "name":  "AWS_BEARER_TOKEN_BEDROCK"
                                                          }
                                                      ],
                                      "essential":  true,
-                                     "image":  "897722703585.dkr.ecr.us-east-1.amazonaws.com/negotiation-agent:latest",
+                                     "image":  "",
                                      "portMappings":  [
                                                           {
                                                               "protocol":  "tcp",
