@@ -1,21 +1,41 @@
-name: contractguard-analysis
-description: AI agent for analyzing freelance contracts and detecting unfair terms
-version: 1.0.0
-runtime: python3.11
-handler: handler.py
-memory_id: contractguard-memory
-guardrail_id: contractguard-guardrail
-
-dependencies:
-  - boto3>=1.34.0
-  - bedrock-agentcore>=0.1.0
-  - strands>=0.1.0
-
-tools:
-  - contract_parser
-  - jurisdiction_checker
-  - enhanced_jurisdiction_checker
-
-environment:
-  AWS_REGION: us-east-1
-  LOG_LEVEL: INFO
+default_agent: analysis
+agents:
+  analysis:
+    name: analysis
+    entrypoint: working_handler.py
+    platform: linux/amd64
+    container_runtime: docker
+    source_path: null
+    aws:
+      execution_role: arn:aws:iam::897722703585:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-57a8d44b6f
+      execution_role_auto_create: false
+      account: '897722703585'
+      region: us-east-1
+      ecr_repository: 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: analysis-Nj7rug2k46
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:897722703585:runtime/analysis-Nj7rug2k46
+      agent_session_id: a31be30d-bc40-4ac0-a2cc-70ef062f6719
+    codebuild:
+      project_name: bedrock-agentcore-analysis-builder
+      execution_role: arn:aws:iam::897722703585:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-760dcef511
+      source_bucket: bedrock-agentcore-codebuild-sources-897722703585-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: contractguard_mem-6DD6rJ8kA3
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:897722703585:memory/contractguard_mem-6DD6rJ8kA3
+      memory_name: analysis_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: true
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

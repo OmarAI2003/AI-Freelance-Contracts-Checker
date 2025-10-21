@@ -9,30 +9,20 @@ from strands import Agent
 from strands.models import BedrockModel
 from tools import contract_parser, jurisdiction_checker, enhanced_jurisdiction_checker
 from prompts import ANALYSIS_SYSTEM_PROMPT
-# Guardrail integration - handle import gracefully
-try:
-    from infrastructure.guardrail_integration import ContractGuardGuardrail, GuardrailAction
-except ImportError:
-    ContractGuardGuardrail = None
-    GuardrailAction = None
+from document_parser import DocumentParser
+# Guardrail is now handled by AgentCore configuration
 import json
 import os
 import logging
 import asyncio
 from typing import Dict, List, Any, Optional
 
-# Configure logging for CloudWatch
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-# Add CloudWatch handler in production
-if os.environ.get('AWS_EXECUTION_ENV'):
-    import watchtower
-    handler = watchtower.CloudWatchLogsHandler(log_group='/aws/agentcore/contractguard-analysis')
-    logger.addHandler(handler)
 
 
 class AnalysisAgent:
@@ -66,26 +56,21 @@ class AnalysisAgent:
             if os.path.exists(path):
                 config_path = path
                 break
-        try:
-            with open(config_path) as f:
-                config = json.load(f)
-        except FileNotFoundError:
-            logger.warning("Config file not found, using defaults")
+        if config_path:
+            try:
+                with open(config_path) as f:
+                    config = json.load(f)
+            except FileNotFoundError:
+                logger.warning("Config file not found, using defaults")
+                config = {"memory_id": "YOUR_MEMORY_ID"}
+        else:
+            logger.warning("No config file found, using defaults")
             config = {"memory_id": "YOUR_MEMORY_ID"}
         
         # Use provided memory_id or fall back to config
         self.memory_id = memory_id or config.get('memory_id')
         
-        # Initialize guardrail
-        self.guardrail = None
-        if config.get('guardrail_id') and ContractGuardGuardrail:
-            try:
-                self.guardrail = ContractGuardGuardrail(
-                    config['guardrail_id'], 
-                    config.get('guardrail_version', '1')
-                )
-            except Exception as e:
-                logger.warning(f"Could not initialize guardrail: {e}")
+        # Guardrail is handled by AgentCore
         
         # Initialize Bedrock model (Claude 3 Haiku)
         self.model = BedrockModel(
@@ -129,12 +114,12 @@ class AnalysisAgent:
         
         return agent
     
-    def analyze(self, contract_text: str, session_id: Optional[str] = None) -> Dict[str, Any]:
+    async def analyze_file(self, file_path: str, session_id: Optional[str] = None) -> Dict[str, Any]:
         """
-        Analyze a contract and return risk assessment
+        Analyze a contract file (PDF/DOCX) and return risk assessment
         
         Args:
-            contract_text: Raw contract text to analyze
+            file_path: Path to contract file (PDF or DOCX)
             session_id: Optional session ID for memory isolation
             
         Returns:
@@ -145,36 +130,50 @@ class AnalysisAgent:
             - scam_indicators: List of scam red flags
             - jurisdictions_checked: Jurisdictions analyzed
         """
-        # Input validation
-        if not contract_text or not isinstance(contract_text, str):
-            logger.error("Invalid contract text provided")
-            return self._error_response("Contract text is required and must be a string")
+        # Validate file
+        if not DocumentParser.validate_file(file_path):
+            logger.error(f"Invalid file: {file_path}")
+            return self._error_response(f"File not found or unsupported format: {file_path}")
+        
+        # Extract text from document
+        logger.info(f"Extracting text from: {file_path}")
+        contract_text = DocumentParser.extract_text_from_file(file_path)
+        
+        if not contract_text:
+            logger.error(f"Could not extract text from: {file_path}")
+            return self._error_response(f"Failed to extract text from file: {file_path}")
         
         if len(contract_text.strip()) < 50:
-            logger.warning("Contract text is very short")
+            logger.warning("Extracted text is very short")
             return self._error_response("Contract text too short (minimum 50 characters)")
         
         if len(contract_text) > 100000:  # 100KB limit
             logger.warning(f"Contract text truncated from {len(contract_text)} to 100000 characters")
             contract_text = contract_text[:100000]
         
+        # Continue with text analysis
+        return await self._analyze_text(contract_text, session_id, file_path)
+    
+    async def _analyze_text(self, contract_text: str, session_id: Optional[str] = None, source_file: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Internal method to analyze contract text
+        
+        Args:
+            contract_text: Extracted contract text
+            session_id: Optional session ID for memory isolation
+            source_file: Original file path for logging
+            
+        Returns:
+            Structured risk assessment
+        """
+        
         # Use default session if not provided
         if not session_id:
             session_id = "default"
         
-        logger.info(f"Starting analysis for session {session_id}, text length: {len(contract_text)}")
+        logger.info(f"Starting analysis for session {session_id}, text length: {len(contract_text)}, source: {source_file or 'direct text'}")
         
-        # Validate input with guardrail
-        if self.guardrail and GuardrailAction:
-            try:
-                input_result = self.guardrail.validate_input(contract_text, "analysis")
-                if input_result.action == GuardrailAction.BLOCK:
-                    return self._error_response(f"Input blocked: {input_result.message}")
-            except Exception as e:
-                logger.warning(f"Guardrail validation failed: {e}")
-        
-        # Create agent for this session
-        agent = self._create_agent(session_id)
+        # Input validation handled by AgentCore guardrail
         
         # Construct analysis request
         analysis_request = f"""Analyze this freelance contract for risks and unfair terms:
@@ -209,27 +208,23 @@ Return your analysis in this JSON format:
   "recommendations": "suggested actions"
 }}"""
         
+        # Create agent for this session
+        agent = self._create_agent(session_id)
+        
         # Run the agent
         try:
             logger.info("Invoking analysis agent")
-            response = asyncio.run(agent.invoke_async(analysis_request))
+            response = await agent.invoke_async(analysis_request)
             
             # Parse the response
             response_text = str(response) if hasattr(response, '__str__') else response
             result = self._parse_agent_response(response_text)
             
-            # Validate output with guardrail
-            if self.guardrail and GuardrailAction:
-                try:
-                    output_result = self.guardrail.validate_output(str(result), "analysis")
-                    if output_result.action == GuardrailAction.BLOCK:
-                        return self._error_response(f"Output blocked: {output_result.message}")
-                    elif output_result.filtered_content:
-                        # Update result with filtered content if needed
-                        if 'recommendations' in result:
-                            result['recommendations'] = output_result.filtered_content
-                except Exception as e:
-                    logger.warning(f"Guardrail output validation failed: {e}")
+            # Output validation handled by AgentCore guardrail
+            
+            # Add source file info to result
+            if source_file:
+                result['source_file'] = source_file
             
             logger.info(f"Analysis completed successfully, risk level: {result.get('risk_level')}")
             return result

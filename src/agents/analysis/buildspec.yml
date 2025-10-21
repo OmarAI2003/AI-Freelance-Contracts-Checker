@@ -1,12 +1,30 @@
 version: 0.2
 phases:
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 897722703585.dkr.ecr.us-east-1.amazonaws.com
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building ARM64 Docker image for AgentCore...
-      - docker build --platform linux/arm64 -t 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis:latest .
+      - echo "Starting parallel Docker build and ECR authentication..."
+      - |
+        docker build -t bedrock-agentcore-arm64 . &
+        BUILD_PID=$!
+        aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
+        docker login --username AWS --password-stdin 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis &
+        AUTH_PID=$!
+        echo "Waiting for Docker build to complete..."
+        wait $BUILD_PID
+        if [ $? -ne 0 ]; then
+          echo "Docker build failed"
+          exit 1
+        fi
+        echo "Waiting for ECR authentication to complete..."
+        wait $AUTH_PID
+        if [ $? -ne 0 ]; then
+          echo "ECR authentication failed"
+          exit 1
+        fi
+        echo "Both build and auth completed successfully"
+      - docker tag bedrock-agentcore-arm64 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis:latest
+  post_build:
+    commands:
+      - echo "Pushing ARM64 image to ECR..."
       - docker push 897722703585.dkr.ecr.us-east-1.amazonaws.com/contractguard-analysis:latest
+      - echo "Build completed successfully"

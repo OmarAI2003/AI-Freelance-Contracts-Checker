@@ -3,5 +3,10 @@
   "guardrail_id": "tz77r3v55hoz",
   "guardrail_version": "1",
   "aws_region": "us-east-1",
-  "environment": "development"
+  "environment": "development",
+  "aws": {
+    "region": "us-east-1",
+    "account": "897722703585",
+    "execution_role": "arn:aws:iam::897722703585:role/ContractGuardAgentRole"
+  }
 }
