@@ -84,3 +84,7 @@ tmp/
 # AgentCore
 .bedrock_agentcore/
 .agentcore/
+# AWS Credentials
+*accessKeys.csv
+*.pem
+*.key
