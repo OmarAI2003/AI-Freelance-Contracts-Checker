@@ -45,7 +45,7 @@ FreeLegal AI helps freelancers worldwide analyze contracts in 60 seconds, unders
 
 ## 🏗️ Architecture
 
-![Architecture Diagram](architecture.png)
+![Architecture Diagram](architecture-diagram.png)
 
 ### System Flow
 
@@ -415,4 +415,5 @@ Thanks to all our amazing contributors! ❤️
 <a href="https://github.com/OmarAI2003">
   <img src="https://avatars.githubusercontent.com/OmarAI2003" width="50" height="50" style="border-radius:50%" />
 </a>
+
 
