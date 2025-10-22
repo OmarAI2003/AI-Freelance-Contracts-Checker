@@ -1,185 +1,403 @@
-# 🛡️ AI-Freelance-Contracts-Checker
+# 🤖 FreeLegal AI - Freelancer Legal Assistant
 
-[![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![Bedrock](https://img.shields.io/badge/Amazon_Bedrock-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/bedrock/)
-
-<a id=""></a>
+> **AI-powered legal assistant helping freelancers navigate contracts, payment disputes, and negotiations without expensive lawyers.**
 
 
-## **Contents**
+**AWS Bedrock Hackathon 2025**
 
-- [🎯 Overview `⇧`](#overview-)
-- [🌟 Features `⇧`](#features-)
-- [🏗️ Architecture `⇧`](#architecture-)
-- [🛠️ Environment setup `⇧`](#environment-setup-)
-- [🧩 Project Structure `⇧`](#project-structure-)
-- [👥 Contributors `⇧`](#contributors-)
+---
 
-<a id="overview-"></a>
+## 🎯 What It Does
 
-# 🎯 Overview [`⇧`](#contents)
+FreeLegal AI helps freelancers worldwide analyze contracts in 60 seconds, understand legal terms, and negotiate better deals—without expensive lawyers.
 
+**Key Benefits:**
+- ✅ Analyze contracts for unfair clauses and hidden risks
+- 📖 Understand complex legal jargon in plain English
+- 🤝 Negotiate better terms with data-backed counter-proposals
+- ⚡ Get instant answers to urgent legal questions
+- 🌍 Jurisdiction-specific legal guidance powered by RAG
 
-<a id="features-"></a>
+---
 
-# 🌟 Features [`⇧`](#contents)
+## ✨ Core Features
 
-<a id="architecture-"></a>
-ContractGuard AI helps freelancers worldwide:
-- ✅ **Analyze** contracts for unfair clauses and hidden risks
-- 📖 **Understand** complex legal jargon in plain English (8th-grade level)
-- 🤝 **Negotiate** better terms with data-backed counter-proposals
+### 🤖 4 Specialized AI Agents
 
-# 🏗️ Architecture [`⇧`](#contents)
+| Agent | Purpose | Example |
+|-------|---------|---------|
+| **⚡ Action Agent** | Immediate help for urgent issues | "My client won't pay $5000 - what do I do NOW?" |
+| **🔍 Analysis Agent** | Contract review & red flag detection | "Is this payment term fair? What's risky?" |
+| **💡 Explanation Agent** | Legal terms in plain English | "What does 'force majeure' mean?" |
+| **🤝 Negotiation Agent** | Tactical advice for pushback | "How do I negotiate better payment terms?" |
 
-![Architecture Diagram](architecture.png)
+### 🚀 Platform Capabilities
 
+- **Contract Upload**: Drag & drop PDF/TXT contracts for instant analysis
+- **AWS Textract Integration**: Automatic text extraction from PDFs
+- **RAG-Powered Legal Knowledge**: AWS Bedrock Knowledge Bases with S3-stored laws and regulations
+- **Context-Aware Responses**: Agents reference your uploaded contract and jurisdiction-specific laws
+- **Session Memory**: AWS AgentCore maintains conversation context
+- **Observability**: Full AgentCore monitoring and logging
+- **Responsive Design**: Works seamlessly on desktop & mobile
 
+---
 
-### AgentCore Runtime
+## 🏗️ Architecture
 
+![Architecture Diagram](architecture-diagram.png)
 
-### Knowledge Management
+### System Flow
 
-### Memory System
-
-### Key AWS Services Used
-
-* **Amazon CloudFront**: Content delivery network
-* **S3**: Object storage for static website and knowledge base
-* **API Gateway**: RESTful API management
-* **Lambda Functions**: Serverless compute for OCR and orchestration
-* **Amazon Bedrock**: Managed AI/ML foundation models
-* **Guardrails**: AI safety and compliance controls
-
-
-##  Live Demo [`⇧`](#contents)
-
-- **Website**: [http://egyptian-legal-analysis-ui.s3-website-us-west-2.amazonaws.com/](https://egyptian-legal-analysis-ui.s3.amazonaws.com/index.html)
-
-
-<a id="environment-setup"></a>
-
-# Environment setup [`⇧`](#contents)
-1. First and foremost, please see the suggested IDE setup in the dropdown below to make sure that your editor is ready for development.
-
-> [!IMPORTANT]
->
-> <details><summary>Suggested IDE setup</summary>
->
-> <p>
->
-> VS Code
->
-> Install the following extensions:
->
-> - [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
-> - [streetsidesoftware.code-spell-checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
->
-> </p>
-> </details>
-
-1. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the [AI-Legal-Checker repo](https://github.com/activist-org/AI-Legal-Checker), clone your fork, and configure the remotes:
-
-> [!NOTE]
->
-> <details><summary>Consider using SSH</summary>
->
-> <p>
->
-> Alternatively to using HTTPS as in the instructions below, consider SSH to interact with GitHub from the terminal. SSH allows you to connect without a user-pass authentication flow.
->
-> To run git commands with SSH, remember then to substitute the HTTPS URL, `https://github.com/...`, with the SSH one, `git@github.com:...`.
->
-> - e.g. Cloning now becomes `git clone git@github.com:<your-username>/AI-Legal-Checker.git`
->
-> GitHub also has their documentation on how to [Generate a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) 🔑
->
-> </p>
-> </details>
-
-```bash
-# Clone your fork of the repo into the current directory.
-git clone https://github.com/OmarAI2003/AI-Freelance-Contracts-Checker
-# Navigate to the newly cloned directory.
-cd AI-Freelance-Contracts-Checker
-# Assign the original repo to a remote called "upstream".
-git remote add upstream https://github.com/OmarAI2003/AI-Freelance-Contracts-Checker
+```
+User Contract (PDF/TXT)
+    ↓
+AWS Textract (Text Extraction)
+    ↓
+┌─────────────────────────────────────┐
+│   AWS Bedrock Knowledge Bases       │
+│   ├─ KB 9LRYYFY2BR (Contract Types) │
+│   └─ KB XNHMT6VAJC (Freelance Laws) │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│   AWS AgentCore Runtime (5 Agents)  │
+│   ├─ Action Agent                   │
+│   ├─ Analysis Agent                 │
+│   ├─ Explanation Agent              │
+│   ├─ Negotiation Agent              │
+│   └─ Orchestration Layer            │
+└─────────────────────────────────────┘
+    ↓
+Final Report + Recommendations
 ```
 
-- Now, if you run `git remote -v` you should see two remote repositories named:
-  - `origin` (forked repository)
-  - `upstream` (AI-Freelance-Contracts-Checker repository)
+### Tech Stack
 
-3. Create a virtual environment, activate it and install dependencies:
-
-   ```bash
-   # Unix or MacOS:
-   python3 -m venv venv
-   source venv/bin/activate
-
-   # Windows:
-   python -m venv venv
-   venv\Scripts\activate.bat
-
-   # After activating venv:
-   pip install --upgrade pip
-   pip install -r requirements-dev.txt
-
-   # To install the AI-Freelance-Contracts-Checker for local development:
-   pip install -e .
-   ```
-
-You're now ready to work on `AI-Freelance-Contracts-Checker`!
-
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the docs/ folder for detailed documentation
-2. Review CloudWatch logs for debugging
-3. Ensure all AWS services are properly configured
-4. Verify agent deployment status
-
-<a id="project-structure-"></a>
-
-# 📁 Project Structure [`⇧`](#contents)
+#### Core Services
 ```
-AI-Freelance-Contracts-Checker/
+├─ AWS Bedrock (Claude 3.5 Sonnet v2, Nova Pro)
+├─ AWS Bedrock AgentCore Runtime (5 agents)
+├─ AWS Lambda (Python 3.12)
+├─ AWS API Gateway (REST API)
+├─ AWS S3 (Static hosting + document storage)
+├─ AWS CloudFront (CDN)
+├─ AWS Textract (PDF text extraction)
+├─ AWS Bedrock Knowledge Base (2 KBs)
+│   ├─ KB 9LRYYFY2BR (Contract Types)
+│   └─ KB XNHMT6VAJC (Freelance Laws)
+└─ AWS AgentCore Browser Tool
+```
+
+#### External Integrations
+```
+├─ DuckDuckGo Search API (web search)
+├─ Case.law API (Harvard Law School legal database)
+└─ PDF.js (Mozilla - client-side PDF parsing)
+```
+
+#### Protocols
+```
+├─ A2A Protocol (Agent-to-Agent communication)
+└─ JSON-RPC 2.0 (message format)
+```
+
+---
+
+## 🤖 AI Agents & Tools
+
+All agents are deployed on **AWS Bedrock AgentCore** with:
+- ✅ **AgentCore Memory**: Maintains conversation context across sessions
+- ✅ **AgentCore Observability**: Full monitoring, logging, and debugging
+- ✅ **Tool Integration**: Custom tools for specialized tasks
+
+### ⚡ Action Agent
+
+**Purpose**: Provide immediate, jurisdiction-specific action plans for urgent legal issues
+
+**Interaction Flow**:
+```
+User: "My client won't pay"
+Bot: "I need a few details to help you:
+     - Which country are you in?
+     - How much are you owed?
+     - How long has it been?"
+
+User: "Country is Egypt, 1000$, 2 weeks"
+Bot: ⚡ ACTION PLAN: Non-Payment in Egypt
+     
+     Thank you for providing those details. 
+     Here's your specific action plan for recovering 
+     $1,000 from a client in Egypt...
+     [Full Egypt-specific guidance]
+```
+
+**Tools**:
+
+```python
+@tool
+def search_similar_cases(issue_type, jurisdiction, contract_text):
+    """
+    Uses DuckDuckGo Search API + Case.law API (Harvard Law)
+    to find similar legal cases and precedents
+    """
+
+@tool
+def generate_action_plan(issue_description, jurisdiction, 
+                        amount_at_stake, days_since_issue):
+    """
+    Uses AWS Bedrock (Claude 3.5 Sonnet) to generate 
+    personalized action plans based on jurisdiction
+    """
+
+@tool
+def get_evidence_checklist(issue_type):
+    """
+    Static structured data (no external API)
+    Returns checklist of evidence to collect
+    """
+
+@tool
+def get_legal_resources(jurisdiction, issue_type, amount_at_stake):
+    """
+    Static jurisdiction-specific resource links
+    (courts, legal aid, arbitration services)
+    """
+```
+
+---
+
+### 🔍 Analysis Agent
+
+**Purpose**: Deep contract analysis with jurisdiction-specific compliance checking
+
+**Tools**:
+
+```python
+@tool
+def contract_parser(contract_text):
+    """
+    Uses Bedrock Knowledge Base 9LRYYFY2BR (Contract Types)
+    to identify contract structure and key clauses
+    """
+
+@tool
+def jurisdiction_checker(clause_text, clause_type, jurisdictions):
+    """
+    Uses Bedrock Knowledge Base XNHMT6VAJC (Freelance Laws)
+    to validate clause legality across jurisdictions
+    """
+
+@tool
+def enhanced_jurisdiction_checker(clause_text, clause_type, jurisdiction):
+    """
+    Uses AWS AgentCore Browser Tool (web validation)
+    for real-time legal compliance checking
+    """
+```
+
+---
+
+### 💡 Explanation Agent
+
+**Purpose**: Translate complex legal terminology into plain English
+
+**Tools**:
+
+```python
+@tool
+def simplify_legal_term(term, context):
+    """
+    Uses Claude to translate legal → plain English (8th-grade level)
+    """
+
+@tool
+def get_real_world_examples(term):
+    """
+    Uses Knowledge Base for case examples
+    showing how terms apply in practice
+    """
+
+@tool
+def compare_jurisdictions(term, jurisdictions):
+    """
+    Uses Knowledge Base for jurisdiction differences
+    (e.g., how "force majeure" varies by country)
+    """
+```
+
+---
+
+### 🤝 Negotiation Agent
+
+**Purpose**: Generate tactical negotiation strategies with specific talking points
+
+**Tools**:
+
+```python
+@app.action
+def analyze_contract(payload):
+    """Analyze contract for negotiable issues"""
+
+@app.action
+def explain_terms(payload):
+    """Explain terms in simple language"""
+
+@app.action
+def negotiate_terms(payload):
+    """Generate negotiation strategies with scripts"""
+
+@app.action
+def legal_advice(payload):
+    """Provide legal guidance for negotiations"""
+```
+
+---
+
+## 📂 Project Structure
+
+```
+freelegal-ai/
 ├── src/
 │   ├── agents/
-│   │   ├── analysis/
-│   │   ├── explanation/
-│   │   └── negotiation/
-│   ├── orchestration/
-│   ├── frontend/
-│   └── infrastructure/
-├── data/
-│   ├── freelance-laws/
-│   ├── MSA/
-│   ├── NDA/
-│   ├── Service Agreement/
-│   ├── SOW/
-│   └── .gitkeep
-├── docs/
-├── tests/
-│   └── __init__.py
-├── .env.example
-├── .gitignore
-├── architecture.md
-├── LICENSE
-├── pytest.ini
-├── README.md
-├── requirements.txt
-└── requirements-dev.txt
+│   │   ├── action/                # Action Agent + tools
+│   │   ├── analysis/              # Analysis Agent + tools
+│   │   ├── explanation/           # Explanation Agent + tools
+│   │   └── negotiation/           # Negotiation Agent + tools
+│   ├── orchestration/             # Agent routing & coordination
+│   ├── frontend/                  # Static website
+│   │   ├── index.html             # Landing page
+│   │   ├── chat-action.html       # Action agent interface
+│   │   ├── chat-analysis.html     # Analysis agent (with upload)
+│   │   ├── chat-explanation.html  # Explanation agent
+│   │   ├── chat-negotiation.html  # Negotiation agent
+│   │   └── static/
+│   │       ├── css/               # Styles
+│   │       └── js/                # JavaScript
+│   └── infrastructure/            # AWS configuration
+├── knowledge_bases/
+│   ├── contract_types/            # KB 9LRYYFY2BR
+│   └── freelance_laws/            # KB XNHMT6VAJC
+├── docs/                          # Implementation guides
+└── README.md
 ```
 
-## 📄 License 
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- AWS Account with access to:
+  - Bedrock, AgentCore, Lambda, S3, CloudFront
+  - Textract, Knowledge Bases
+- AWS CLI configured
+- Python 3.12+
+
+### Installation
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd freelegal-ai
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Usage
+
+1. **Access the platform** via your deployment URL
+2. **Choose an agent** based on your need
+3. **Upload your contract** (Analysis Agent)
+4. **Ask questions** and get instant AI-powered advice
+
+---
+
+## 🎨 Features in Detail
+
+### RAG-Powered Legal Knowledge
+
+**AWS Bedrock Knowledge Bases**:
+- **KB 9LRYYFY2BR**: Contract types, standard clauses, industry benchmarks
+- **KB XNHMT6VAJC**: Freelance laws by jurisdiction, compliance requirements
+
+**Benefits**:
+- Jurisdiction-specific legal guidance
+- Up-to-date legal information
+- Reduced hallucinations with grounded responses
+- Real-time validation via AgentCore Browser Tool
+
+### AWS Textract Integration
+
+- Server-side PDF text extraction
+- Handles scanned documents and images
+- Preserves document structure
+- High accuracy for legal documents
+
+### AgentCore Memory & Observability
+
+**Memory**:
+- Conversation context maintained across messages
+- Session persistence until explicit reset
+- Cross-agent context sharing
+
+**Observability**:
+- Full request/response logging
+- Tool invocation tracking
+- Performance metrics
+- Error monitoring and debugging
+
+### Multi-Agent Communication
+
+**A2A Protocol**:
+- Agents can communicate with each other
+- Coordinated analysis across specializations
+- Shared knowledge base access
+
+**JSON-RPC 2.0**:
+- Standardized message format
+- Error handling
+- Request/response correlation
+
+---
+
+## 🔒 Security
+
+- AWS IAM role-based access control
+- S3 private buckets for document storage
+- Encrypted data in transit (HTTPS)
+- CORS-enabled API with proper headers
+- No sensitive data stored in frontend
+- AgentCore security best practices
+
+---
+
+## 🌟 Why FreeLegal AI?
+
+**Traditional Solution**: Hire a lawyer ($300-500/hour) ❌  
+**Our Solution**: FreeLegal AI (instant, accessible) ✅
+
+**The Problem**:
+- 💸 73% of freelancers face payment issues
+- 📄 Most can't afford legal review ($500+ per contract)
+- ⚖️ Legal jargon creates information asymmetry
+- 🤝 Freelancers lack negotiation confidence
+
+**Our Impact**:
+- Save $500+ per contract review
+- Get answers in 60 seconds vs 3-5 business days
+- Understand contracts without law degree
+- Negotiate from position of knowledge
+- Jurisdiction-specific legal guidance
+- 
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-<a id="contributors-"></a>
 
 # Contributors [`⇧`](#contents)
 
